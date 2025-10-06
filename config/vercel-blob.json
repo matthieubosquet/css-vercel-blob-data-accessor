@@ -1,0 +1,10 @@
+{
+  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/context.jsonld",
+  "@graph": [
+    {
+      "@type": "VercelBlobDataAccessor",
+      "@id": "urn:x:VercelBlobDataAccessor",
+      "resourceMapper": { "@id": "urn:solid-server:default:FileIdentifierMapper" }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "css-vercel-blob-data-accessor",
+  "version": "0.0.0",
+  "description": "A data accessor for the Community Solid Server to use Vercel Blob storage as a backend",
+  "repository": "git@github.com:CommunitySolidServer/hello-world-module.git",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "lsd:module": "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor",
+  "lsd:components": "dist/components/components.jsonld",
+  "lsd:contexts": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/context.jsonld": "dist/components/context.jsonld"
+  },
+  "lsd:importPaths": {
+    "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/": "dist/components/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/config/": "config/",
+    "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/dist/": "dist/"
+  },
+  "scripts": {
+    "start": "community-solid-server --config config.json --rootFilePath .data --mainModulePath .",
+    "build": "npm run build:ts && npm run build:components",
+    "build:components": "componentsjs-generator -s src -c dist/components -i .componentsignore -r css-vercel-blob-data-accessor",
+    "build:ts": "tsc",
+    "prepare": "npm run build",
+    "test": "jest"
+  },
+  "files": [
+    "dist",
+    "config"
+  ],
+  "dependencies": {
+    "@solid/community-server": "^8.0.0-alpha.1",
+    "global-logger-factory": "^1"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "^20",
+    "@types/jest": "^30",
+    "componentsjs-generator": "^4",
+    "jest": "^30",
+    "ts-jest": "^29",
+    "typescript": "^5"
+  },
+  "license": "MIT"
+}
