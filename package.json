@@ -16,12 +16,13 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/dist/": "dist/"
   },
   "scripts": {
-    "start": "community-solid-server --config config.json --rootFilePath .data --mainModulePath .",
+    "start": "npm run build & community-solid-server --config config.json --rootFilePath .data --mainModulePath .",
     "build": "npm run build:ts && npm run build:components",
     "build:components": "componentsjs-generator -s src -c dist/components -i .componentsignore -r css-vercel-blob-data-accessor",
     "build:ts": "tsc",
     "prepare": "npm run build",
-    "test": "jest"
+    "test": "jest",
+    "x": "vercel env pull"
   },
   "files": [
     "dist",
@@ -29,7 +30,9 @@
   ],
   "dependencies": {
     "@solid/community-server": "^8.0.0-alpha.1",
-    "global-logger-factory": "^1"
+    "@vercel/blob": "^2.0.0",
+    "global-logger-factory": "^1",
+    "vercel": "^48.2.2"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20",
