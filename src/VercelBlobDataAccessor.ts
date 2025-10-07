@@ -23,8 +23,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
   }
 
   public async getData(identifier: ResourceIdentifier): Promise<Guarded<Readable>> {
-    this.logger.info("getData");
-    this.logger.info(identifier.path);
+    this.logger.info("getData " + identifier.path);
+
     const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
     const stats = await this.getStats(link.filePath);
 
@@ -37,6 +37,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
   public async getMetadata(identifier: ResourceIdentifier): Promise<RepresentationMetadata> {
     this.logger.info("getMetadata " + identifier.path);
+
     const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
     const stats = await this.getStats(link.filePath);
     if (!isContainerIdentifier(identifier) && stats.isFile()) {
@@ -49,7 +50,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
   }
 
   public async* getChildren(identifier: ResourceIdentifier): AsyncIterableIterator<RepresentationMetadata> {
-    this.logger.info("GET CHILDREN");
+    this.logger.info("getChildren " + identifier.path);
+
     const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
     yield* this.getChildMetadata(link);
   }
@@ -78,6 +80,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
   public async writeContainer(identifier: ResourceIdentifier, metadata: RepresentationMetadata): Promise<void> {
     this.logger.info("writeContainer " + identifier.path);
+
     const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
     await ensureDir(link.filePath);
 
@@ -85,13 +88,15 @@ export class VercelBlobDataAccessor implements DataAccessor {
   }
 
   public async writeMetadata(identifier: ResourceIdentifier, metadata: RepresentationMetadata): Promise<void> {
-    this.logger.info("WRITE METADATA");
+    this.logger.info("writeMetadata " + identifier.path);
+
     const metadataLink = await this.resourceMapper.mapUrlToFilePath(identifier, true);
     await this.writeMetadataFile(metadataLink, metadata);
   }
 
   public async deleteResource(identifier: ResourceIdentifier): Promise<void> {
-    this.logger.info("DELETE RESOURCE");
+    this.logger.info("deleteResource" + identifier.path);
+
     const metaLink = await this.resourceMapper.mapUrlToFilePath(identifier, true);
     await remove(metaLink.filePath);
 
@@ -108,7 +113,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
   }
 
   protected async getStats(path: string): Promise<{ isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }> {
-    this.logger.info("getStats");
+    this.logger.info("getStats " + path);
+
     try {
       return await stat(path);
     } catch (error: unknown) {
@@ -122,7 +128,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
   }
 
   private async getFileMetadata(link: ResourceLink, stats: { isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }): Promise<RepresentationMetadata> {
-    this.logger.info("getFileMetadata");
+    this.logger.info("getFileMetadata " + link.identifier.path);
+
     const metadata = await this.getBaseMetadata(link, stats, false);
     // If the resource is using an unsupported contentType, the original contentType was written to the metadata file.
     // As a result, we should only set the contentType derived from the file path,
@@ -135,12 +142,16 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
   private async getBaseMetadata(link: ResourceLink, stats: { isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }, isContainer: boolean):
     Promise<RepresentationMetadata> {
+    this.logger.info("getBaseMetadata " + link.identifier.path);
+
     const metadata = await this.getRawMetadata(link.identifier);
     addResourceMetadata(metadata, isContainer);
     this.addPosixMetadata(metadata, stats);
     return metadata;
   }
   private async getRawMetadata(identifier: ResourceIdentifier): Promise<RepresentationMetadata> {
+    this.logger.info("getRawMetadata " + identifier.path);
+
     try {
       const metadataLink = await this.resourceMapper.mapUrlToFilePath(identifier, true);
 
@@ -168,6 +179,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
     }
   }
   private async* getChildMetadata(link: ResourceLink): AsyncIterableIterator<RepresentationMetadata> {
+    this.logger.info("getChildMetadata " + link.identifier.path);
+
     const dir = await opendir(link.filePath);
 
     // For every child in the container we want to generate specific metadata
@@ -216,13 +229,9 @@ export class VercelBlobDataAccessor implements DataAccessor {
     }
   }
 
-  /**
-   * Helper function to add file system related metadata.
-   *
-   * @param metadata - metadata object to add to
-   * @param stats - Stats of the file/directory corresponding to the resource.
-   */
   private addPosixMetadata(metadata: RepresentationMetadata, stats: { isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }): void {
+    this.logger.info("addPosixMetadata");
+
     // Make sure the last modified date is the max of data and metadata modified date
     const modified = new Date(metadata.get(DC.terms.modified)?.value ?? 0);
     if (modified < stats.mtime) {
@@ -239,17 +248,11 @@ export class VercelBlobDataAccessor implements DataAccessor {
   }
   private async getDirectoryMetadata(link: ResourceLink, stats: { isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }):
     Promise<RepresentationMetadata> {
-    this.logger.info("getDirectoryMetadata");
+    this.logger.info("getDirectoryMetadata " + link.identifier.path);
+
     return this.getBaseMetadata(link, stats, true);
   }
 
-  /**
-   * Verifies if there already is a file corresponding to the given resource.
-   * If yes, that file is removed if it does not match the path given in the input ResourceLink.
-   * This can happen if the content-type differs from the one that was stored.
-   *
-   * @param link - ResourceLink corresponding to the new resource data.
-   */
   protected async verifyExistingExtension(link: ResourceLink): Promise<void> {
     // Delete the old file with the (now) wrong extension
     const oldLink = await this.resourceMapper.mapUrlToFilePath(link.identifier, false);
@@ -258,13 +261,10 @@ export class VercelBlobDataAccessor implements DataAccessor {
     }
   }
 
-  /**
-   * Helper function without extra validation checking to create a data file.
-   *
-   * @param path - The filepath of the file to be created.
-   * @param data - The data to be put in the file.
-   */
   protected async writeDataFile(path: string, data: Readable): Promise<void> {
+    this.logger.info("writeDataFile " + path);
+
+
     await createWriteStream(path, data);
     // return new Promise((resolve, reject): void => {
     //   const writeStream = createWriteStream(path);
@@ -279,6 +279,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
     // });
   }
   protected async writeMetadataFile(link: ResourceLink, metadata: RepresentationMetadata): Promise<boolean> {
+    this.logger.info("writeMetadataFile " + link.identifier.path);
+
     // These are stored by file system conventions
     metadata.remove(RDF.terms.type, LDP.terms.Resource);
     metadata.remove(RDF.terms.type, LDP.terms.Container);
