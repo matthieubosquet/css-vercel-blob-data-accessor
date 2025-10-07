@@ -119,7 +119,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
       return await stat(path);
     } catch (error: unknown) {
       this.logger.info("getStats - Catch " + error);
-      if (isSystemError(error) && error.code === 'ENOENT') {
+      if (error instanceof Error && error.message == "ENOENT") {
         throw new NotFoundHttpError('', { cause: error });
       }
       this.logger.info("getStats - not system error");
@@ -172,7 +172,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
       return metadata;
     } catch (error: unknown) {
       // Metadata file doesn't exist so return empty metadata.
-      if (!isSystemError(error) || error.code !== 'ENOENT') {
+      if (error instanceof Error && error.message == "ENOENT") {
         throw error;
       }
       return new RepresentationMetadata(identifier);
