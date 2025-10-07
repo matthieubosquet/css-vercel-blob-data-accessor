@@ -8,19 +8,19 @@ import { getLoggerFor } from 'global-logger-factory';
 
 const logger = getLoggerFor("Vercel API");
 
-// Thrown errors must get throught checks like `if (isSystemError(error) && error.code === 'ENOENT')`
 export async function createReadStream(path: string): Promise<Readable> {
     logger.info("createReadStream " + path);
-    try {
+
+    if (path.endsWith("%2F")) {
+        logger.info("createReadStream folder " + path);
+        var headResponse = await head(path + ".FOLDER_MARKER_META_FILE", { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
+        var response = await fetch(headResponse.url);
+        return Readable.fromWeb(response.body as any);;
+    } else {
+        logger.info("createReadStream file " + path);
         var headResponse = await head(path, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
         var response = await fetch(headResponse.url);
         return Readable.fromWeb(response.body as any);;
-    } catch (e) {
-        logger.info("error " + e);
-        
-        // Almost certain we should throw in this case
-        // like throw new Error("ENOENT")
-        return new Readable()
     }
 };
 
@@ -33,11 +33,15 @@ export async function createWriteStream(path: string, data: Readable): Promise<v
 export async function ensureDir(path: string): Promise<void> {
     logger.info("ensureDir " + path);
 
-    const statResponse = await stat(path)
-    if (!statResponse.isDirectory()) {
-        logger.info("ensureDir not a directory yet, writing folder marker file " + path);
-
-        await put(path + ".FOLDER_MARKER_META_FILE", "nothing here", { allowOverwrite: true, access: "public", token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
+    try {
+        await stat(path)
+    } catch (error: unknown) {
+        if (error instanceof Error && error.message == "ENOENT") {
+            logger.info("ensureDir not a directory yet, writing folder marker file " + path);
+            await put(path + ".FOLDER_MARKER_META_FILE", "nothing here", { allowOverwrite: true, access: "public", token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
+        } else {
+            throw error
+        }
     }
 }
 
@@ -63,8 +67,8 @@ export async function remove(dir: string): Promise<void> {
 export async function stat(path: string): Promise<{ isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }> {
     logger.info("stat " + path);
 
-    if (path.endsWith("/")) {
-        logger.info("folder");
+    if (path.endsWith("%2F")) {
+        logger.info("stat folder " + path);
         try {
             var headResponse = await head(path + ".FOLDER_MARKER_META_FILE", { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
             return {
@@ -78,12 +82,12 @@ export async function stat(path: string): Promise<{ isFile: () => boolean, isDir
             throw new Error("ENOENT")
         }
     } else {
-        logger.info("file");
+        logger.info("stat file " + path);
         try {
             var headResponse = await head(path, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
             return {
-                isFile: () => !headResponse.pathname.endsWith("/"),
-                isDirectory: () => headResponse.pathname.endsWith("/"),
+                isFile: () => !headResponse.pathname.endsWith("%2F"),
+                isDirectory: () => headResponse.pathname.endsWith("%2F"),
                 mtime: headResponse.uploadedAt,
                 size: headResponse.size
             }
