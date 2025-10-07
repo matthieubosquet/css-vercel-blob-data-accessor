@@ -172,7 +172,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
       return metadata;
     } catch (error: unknown) {
       // Metadata file doesn't exist so return empty metadata.
-      if (error instanceof Error && error.message == "ENOENT") {
+      if (!(error instanceof Error && error.message == "ENOENT")) {
         throw error;
       }
       return new RepresentationMetadata(identifier);
