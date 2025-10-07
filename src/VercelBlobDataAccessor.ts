@@ -12,7 +12,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
   protected readonly resourceMapper: FileIdentifierMapper;
 
   public constructor(resourceMapper: FileIdentifierMapper) {
-    this.resourceMapper = resourceMapper;
+    //this.resourceMapper = resourceMapper;
+    this.resourceMapper = new fim()
   }
 
   public async canHandle(representation: Representation): Promise<void> {
@@ -311,5 +312,18 @@ export class VercelBlobDataAccessor implements DataAccessor {
       wroteMetadata = false;
     }
     return wroteMetadata;
+  }
+}
+
+class fim implements FileIdentifierMapper {
+  public mapFilePathToUrl(filePath: string, isContainer: boolean): Promise<ResourceLink> {
+    throw new Error("fim mapFilePathToUrl not implemented")
+  }
+  public mapUrlToFilePath(identifier: ResourceIdentifier, isMetadata: boolean, contentType?: string): Promise<ResourceLink> {
+    return Promise.resolve({
+      identifier: identifier,
+      filePath: encodeURIComponent(identifier.path),
+      isMetadata: isMetadata
+    })
   }
 }
