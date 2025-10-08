@@ -1,16 +1,17 @@
-import type { StatsBase } from 'fs';
+import { head, put, del } from '@vercel/blob';
 import { Readable } from 'stream';
+import type { Dir } from 'fs';
 
-import { createReadStream, createWriteStream, ensureDir, lstat, opendir, remove, stat } from './VercelApi';
-
-import { DataAccessor, FileIdentifierMapper, ResourceLink, Guarded, Representation, RepresentationMetadata, ResourceIdentifier, UnsupportedMediaTypeHttpError, isSystemError, NotFoundHttpError, isContainerIdentifier, isContainerPath, joinFilePath, CONTENT_TYPE_TERM, DC, IANA, LDP, POSIX, RDF, SOLID_META, XSD, addResourceMetadata, updateModifiedDate, guardStream, parseQuads, serializeQuads, parseContentType, toLiteral, toNamedTerm } from '@solid/community-server';
+import { DataAccessor, FileIdentifierMapper, ResourceLink, Guarded, Representation, RepresentationMetadata, ResourceIdentifier, UnsupportedMediaTypeHttpError, NotFoundHttpError, isContainerIdentifier, isContainerPath, joinFilePath, CONTENT_TYPE_TERM, DC, IANA, LDP, POSIX, RDF, SOLID_META, XSD, addResourceMetadata, updateModifiedDate, guardStream, parseQuads, serializeQuads, parseContentType, toLiteral, toNamedTerm } from '@solid/community-server';
 import { getLoggerFor } from 'global-logger-factory';
+import { fim } from './fim';
 
 export class VercelBlobDataAccessor implements DataAccessor {
     protected readonly logger = getLoggerFor(this);
 
     protected readonly resourceMapper: FileIdentifierMapper;
 
+    // TODO: Configure instead of hardcoding
     public constructor(resourceMapper: FileIdentifierMapper) {
         //this.resourceMapper = resourceMapper;
         this.resourceMapper = new fim()
@@ -31,7 +32,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
         if (stats.isFile()) {
             this.logger.info("is file");
-            return guardStream(await createReadStream(link.filePath));
+            return guardStream(await this.createReadStream(link.filePath));
         }
 
         this.logger.info("not found");
@@ -82,7 +83,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
             if (wroteMetadata) {
                 this.logger.info("writeMetadata")
                 const metaLink = await this.resourceMapper.mapUrlToFilePath(identifier, true);
-                await remove(metaLink.filePath);
+                await this.remove(metaLink.filePath);
             }
             throw error;
         }
@@ -92,7 +93,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
         this.logger.info("writeContainer " + identifier.path);
 
         const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
-        await ensureDir(link.filePath);
+        await this.ensureDir(link.filePath);
 
         await this.writeMetadataFile(link, metadata);
     }
@@ -108,15 +109,15 @@ export class VercelBlobDataAccessor implements DataAccessor {
         this.logger.info("deleteResource" + identifier.path);
 
         const metaLink = await this.resourceMapper.mapUrlToFilePath(identifier, true);
-        await remove(metaLink.filePath);
+        await this.remove(metaLink.filePath);
 
         const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
         const stats = await this.getStats(link.filePath);
 
         if (!isContainerIdentifier(identifier) && stats.isFile()) {
-            await remove(link.filePath);
+            await this.remove(link.filePath);
         } else if (isContainerIdentifier(identifier) && stats.isDirectory()) {
-            await remove(link.filePath);
+            await this.remove(link.filePath);
         } else {
             throw new NotFoundHttpError();
         }
@@ -126,7 +127,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
         this.logger.info("getStats " + path);
 
         try {
-            return await stat(path);
+            return await this.stat(path);
         } catch (error: unknown) {
             this.logger.info("getStats - Catch " + error);
             if (error instanceof Error && error.message == "ENOENT") {
@@ -166,9 +167,9 @@ export class VercelBlobDataAccessor implements DataAccessor {
             const metadataLink = await this.resourceMapper.mapUrlToFilePath(identifier, true);
 
             // Check if the metadata file exists first
-            const stats = await lstat(metadataLink.filePath);
+            const stats = await this.lstat(metadataLink.filePath);
 
-            const readMetadataStream = guardStream(await createReadStream(metadataLink.filePath));
+            const readMetadataStream = guardStream(await this.createReadStream(metadataLink.filePath));
             const quads = await parseQuads(
                 readMetadataStream,
                 { format: metadataLink.contentType, baseIRI: identifier.path },
@@ -193,7 +194,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
     private async* getChildMetadata(link: ResourceLink): AsyncIterableIterator<RepresentationMetadata> {
         this.logger.info("getChildMetadata " + link.identifier.path);
 
-        const dir = await opendir(link.filePath);
+        const dir = await this.opendir(link.filePath);
 
         // For every child in the container we want to generate specific metadata
         for await (const entry of dir) {
@@ -272,26 +273,14 @@ export class VercelBlobDataAccessor implements DataAccessor {
         const oldLink = await this.resourceMapper.mapUrlToFilePath(link.identifier, false);
         if (oldLink.filePath !== link.filePath) {
             this.logger.info("oldLink.filePath !== link.filePath");
-            await remove(oldLink.filePath);
+            await this.remove(oldLink.filePath);
         }
     }
 
     protected async writeDataFile(path: string, data: Readable): Promise<void> {
         this.logger.info("writeDataFile " + path);
 
-
-        await createWriteStream(path, data);
-        // return new Promise((resolve, reject): void => {
-        //   const writeStream = createWriteStream(path);
-        //   data.pipe(writeStream);
-        //   data.on('error', (error): void => {
-        //     reject(error);
-        //     writeStream.end();
-        //   });
-
-        //   writeStream.on('error', reject);
-        //   writeStream.on('finish', resolve);
-        // });
+        await this.createWriteStream(path, data);
     }
     protected async writeMetadataFile(link: ResourceLink, metadata: RepresentationMetadata): Promise<boolean> {
         this.logger.info("writeMetadataFile " + link.identifier.path);
@@ -322,28 +311,91 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
             // Delete (potentially) existing metadata file if no metadata needs to be stored
         } else {
-            await remove(metadataLink.filePath);
+            await this.remove(metadataLink.filePath);
             wroteMetadata = false;
         }
         return wroteMetadata;
     }
+
+    private async createReadStream(path: string): Promise<Readable> {
+        this.logger.info("createReadStream " + path);
+
+        var headResponse = await head(path, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
+        var response = await fetch(headResponse.url);
+        return Readable.fromWeb(response.body as any);;
+    };
+
+    private async createWriteStream(path: string, data: Readable): Promise<void> {
+        this.logger.info("createWriteStream " + path);
+
+        await put(path, data, { allowOverwrite: true, access: "public", token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
+    }
+
+    private async ensureDir(path: string): Promise<void> {
+        this.logger.info("ensureDir " + path);
+
+        try {
+            await this.stat(path)
+        } catch (error: unknown) {
+            if (error instanceof Error && error.message == "ENOENT") {
+                this.logger.info("ensureDir not a directory yet, writing folder marker file " + path);
+                await put(path + ".FOLDER_MARKER_META_FILE", "nothing here", { allowOverwrite: true, access: "public", token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
+            } else {
+                throw error
+            }
+        }
+    }
+
+    private lstat(path: string): Promise<{ isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }> {
+        this.logger.info("lstat " + path);
+
+        return this.stat(path);
+    }
+
+    private opendir(path: string): Promise<Dir> {
+        this.logger.info("opendir");
+
+        throw new Error("Not implemented")
+    }
+
+    private async remove(dir: string): Promise<void> {
+        this.logger.info("remove " + dir);
+
+        await del(dir, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
+    }
+
+    private async stat(path: string): Promise<{ isFile: () => boolean, isDirectory: () => boolean, mtime: Date, size: number }> {
+        this.logger.info("stat " + path);
+
+        if (path.endsWith("/")) {
+            this.logger.info("is folder");
+            try {
+                var headResponse = await head(path + ".FOLDER_MARKER_META_FILE", { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
+                return {
+                    isFile: () => false,
+                    isDirectory: () => true,
+                    mtime: headResponse.uploadedAt,
+                    size: 0
+                }
+            } catch (e) {
+                this.logger.info("error " + e);
+                throw new Error("ENOENT")
+            }
+        } else {
+            this.logger.info("is file");
+            try {
+                var headResponse = await head(path, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
+                return {
+                    isFile: () => !headResponse.pathname.endsWith("/"),
+                    isDirectory: () => headResponse.pathname.endsWith("/"),
+                    mtime: headResponse.uploadedAt,
+                    size: headResponse.size
+                }
+            } catch (e) {
+                this.logger.info("error " + e);
+                throw new Error("ENOENT")
+            }
+        }
+    }
 }
 
-class fim implements FileIdentifierMapper {
-    public mapFilePathToUrl(filePath: string, isContainer: boolean): Promise<ResourceLink> {
-        throw new Error("fim mapFilePathToUrl not implemented")
-    }
-    public mapUrlToFilePath(identifier: ResourceIdentifier, isMetadata: boolean, contentType?: string): Promise<ResourceLink> {
-        const a = identifier.path
-        const b = new URL(a)
-        const c = b.pathname
-        const d = c + (isMetadata ? ".meta" : "")
-        const e = "x" + d
-
-        return Promise.resolve({
-            identifier: identifier,
-            filePath: e,
-            isMetadata: isMetadata
-        })
-    }
-}
