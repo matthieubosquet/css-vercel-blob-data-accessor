@@ -17,7 +17,7 @@ export class VercelBlobDataAccessor implements DataAccessor {
     }
 
     public async canHandle(representation: Representation): Promise<void> {
-        this.logger.info("CAN HANDLE");
+        this.logger.info("canHandle");
         if (!representation.binary) {
             throw new UnsupportedMediaTypeHttpError('Only binary data is supported.');
         }
@@ -30,9 +30,11 @@ export class VercelBlobDataAccessor implements DataAccessor {
         const stats = await this.getStats(link.filePath);
 
         if (stats.isFile()) {
+            this.logger.info("is file");
             return guardStream(await createReadStream(link.filePath));
         }
 
+        this.logger.info("not found");
         throw new NotFoundHttpError();
     }
 
@@ -41,12 +43,16 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
         const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
         const stats = await this.getStats(link.filePath);
+
         if (!isContainerIdentifier(identifier) && stats.isFile()) {
             return this.getFileMetadata(link, stats);
         }
+
         if (isContainerIdentifier(identifier) && stats.isDirectory()) {
             return this.getDirectoryMetadata(link, stats);
         }
+
+        this.logger.info("not found");
         throw new NotFoundHttpError();
     }
 
@@ -59,7 +65,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
     public async writeDocument(identifier: ResourceIdentifier, data: Guarded<Readable>, metadata: RepresentationMetadata):
         Promise<void> {
-        this.logger.info("writeDocument " + identifier.path);
+        this.logger.info("writeDocument " + identifier.path)
+
         const link = await this.resourceMapper.mapUrlToFilePath(identifier, false, metadata.contentType);
 
         // Check if we already have a corresponding file with a different extension
@@ -70,8 +77,10 @@ export class VercelBlobDataAccessor implements DataAccessor {
         try {
             await this.writeDataFile(link.filePath, data);
         } catch (error: unknown) {
+            this.logger.info("error " + error)
             // Delete the metadata if there was an error writing the file
             if (wroteMetadata) {
+                this.logger.info("writeMetadata")
                 const metaLink = await this.resourceMapper.mapUrlToFilePath(identifier, true);
                 await remove(metaLink.filePath);
             }
@@ -172,6 +181,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
             return metadata;
         } catch (error: unknown) {
+            this.logger.info("error " + error);
+
             // Metadata file doesn't exist so return empty metadata.
             if (!(error instanceof Error && error.message == "ENOENT")) {
                 throw error;
@@ -255,9 +266,12 @@ export class VercelBlobDataAccessor implements DataAccessor {
     }
 
     protected async verifyExistingExtension(link: ResourceLink): Promise<void> {
+        this.logger.info("verifyExistingExtension " + link.identifier.path);
+
         // Delete the old file with the (now) wrong extension
         const oldLink = await this.resourceMapper.mapUrlToFilePath(link.identifier, false);
         if (oldLink.filePath !== link.filePath) {
+            this.logger.info("oldLink.filePath !== link.filePath");
             await remove(oldLink.filePath);
         }
     }

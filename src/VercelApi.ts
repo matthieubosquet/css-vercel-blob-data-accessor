@@ -1,6 +1,5 @@
 import { head, put, del } from '@vercel/blob';
 
-import { createWriteStream as fsCreateWriteStream, ensureDir as fsEnsureDir, lstat as fsLstat, opendir as fsOpendir, remove as fsRemove, stat as fsStat } from "fs-extra";
 import { Readable } from 'stream';
 import type { Dir } from 'fs';
 import { getLoggerFor } from 'global-logger-factory';
@@ -11,24 +10,23 @@ const logger = getLoggerFor("Vercel API");
 export async function createReadStream(path: string): Promise<Readable> {
     logger.info("createReadStream " + path);
 
-    if (path.endsWith("/")) {
-        logger.info("createReadStream folder " + path);
-        var headResponse = await head(path + ".FOLDER_MARKER_META_FILE", { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
-        var response = await fetch(headResponse.url);
-        return Readable.fromWeb(response.body as any);;
-    } else {
+    //if (path.endsWith("/")) {
+    //    logger.info("createReadStream folder " + path);
+    //    var headResponse = await head(path + ".FOLDER_MARKER_META_FILE", { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
+    //    var response = await fetch(headResponse.url);
+    //    return Readable.fromWeb(response.body as any);;
+    //} else {
         logger.info("createReadStream file " + path);
         var headResponse = await head(path, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
         var response = await fetch(headResponse.url);
         return Readable.fromWeb(response.body as any);;
-    }
+    //}
 };
 
 export async function createWriteStream(path: string, data: Readable): Promise<void> {
-    logger.info("createWriteStream");
+    logger.info("createWriteStream " + path);
     
-    var a = Readable.toWeb(data);
-    await put(path, a, { allowOverwrite: true, access: "public", token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
+    await put(path, data, { allowOverwrite: true, access: "public", token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
 }
 
 export async function ensureDir(path: string): Promise<void> {
@@ -56,7 +54,7 @@ export function lstat(path: string): Promise<{ isFile: () => boolean, isDirector
 export function opendir(path: string): Promise<Dir> {
     logger.info("opendir");
 
-    return fsOpendir(path);
+    throw new Error("Not implemented")
 }
 
 export async function remove(dir: string): Promise<void> {
@@ -69,7 +67,7 @@ export async function stat(path: string): Promise<{ isFile: () => boolean, isDir
     logger.info("stat " + path);
 
     if (path.endsWith("/")) {
-        logger.info("stat folder " + path);
+        logger.info("is folder");
         try {
             var headResponse = await head(path + ".FOLDER_MARKER_META_FILE", { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
             return {
@@ -83,7 +81,7 @@ export async function stat(path: string): Promise<{ isFile: () => boolean, isDir
             throw new Error("ENOENT")
         }
     } else {
-        logger.info("stat file " + path);
+        logger.info("is file");
         try {
             var headResponse = await head(path, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" })
             return {
