@@ -5,7 +5,7 @@
   ],
   "import": [
     "css-vercel-blob-data-accessor:config/vercel-blob.json",
-
+    
     "css:config/app/init/static-root.json",
     "css:config/app/main/default.json",
     "css:config/app/variables/default.json",
@@ -34,7 +34,7 @@
     "css:config/util/index/default.json",
     "css:config/util/logging/winston.json",
     "css:config/util/representation-conversion/default.json",
-    "css:config/util/resource-locker/debug-void.json",
+    "css:config/util/resource-locker/file.json",
     "css:config/util/variables/default.json"
   ],
   "@graph": [
@@ -45,6 +45,15 @@
       "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" },
       "accessor": { "@id": "urn:x:VercelBlobDataAccessor" },
       "metadataStrategy": { "@id": "urn:solid-server:default:MetadataStrategy" }
+    },
+    {
+      "@id": "urn:css-vercel-blob-data-accessor:config:util:resource-locker:file:override:expiration",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:ResourceLocker" },
+      "overrideParameters": {
+        "@type": "WrappedExpiringReadWriteLocker",
+        "expiration": 60000
+      }
     }
   ]
 }
