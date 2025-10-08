@@ -34,7 +34,7 @@
     "css:config/util/index/default.json",
     "css:config/util/logging/winston.json",
     "css:config/util/representation-conversion/default.json",
-    "css:config/util/resource-locker/debug-void.json",
+    "css:config/util/resource-locker/file.json",
     "css:config/util/variables/default.json"
   ],
   "@graph": [
@@ -45,6 +45,14 @@
       "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" },
       "accessor": { "@id": "urn:x:VercelBlobDataAccessor" },
       "metadataStrategy": { "@id": "urn:solid-server:default:MetadataStrategy" }
+    },
+    {
+      "@id": "urn:solid-server:default:ResourceLocker",
+      "@type": "OverrideParameters",
+      "overrideValue": {
+        "@type": "WrappedExpiringReadWriteLocker",
+        "expiration": 60000
+      }
     }
   ]
 }
