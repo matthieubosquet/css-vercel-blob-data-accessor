@@ -16,6 +16,10 @@ export class VercelBlobDataAccessor implements DataAccessor {
         this.resourceMapper = resourceMapper;
     }
 
+    private async getBlobIdentifier(identifier: ResourceIdentifier): Promise<string> {
+        return (await this.resourceMapper.mapUrlToFilePath(identifier, false)).filePath.substring(1);
+    }
+
     public async canHandle(representation: Representation): Promise<void> {
         this.logger.info("canHandle");
         if (!representation.binary) {
@@ -26,37 +30,23 @@ export class VercelBlobDataAccessor implements DataAccessor {
     public async getData(identifier: ResourceIdentifier): Promise<Guarded<Readable>> {
         this.logger.info("getData: " + identifier.path);
 
-        const blobResource = (await this.resourceMapper.mapUrlToFilePath(identifier, false)).filePath.substring(1);
-
         if (!isContainerIdentifier(identifier)) {
-            var headResponse = await head(blobResource, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
-
+            var headResponse = await head(await this.getBlobIdentifier(identifier), { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
             var response = await fetch(headResponse.url);
 
             return guardStream(Readable.from(response.body as any));
         }
 
-        // const link = await this.resourceMapper.mapUrlToFilePath(identifier, false);
-        // const stats = await this.getStats(link.filePath);
-
-        // if (stats.isFile()) {
-        //     this.logger.info("is file");
-        //     return guardStream(await this.createReadStream(link.filePath));
-        // }
-
-        this.logger.info("not found");
+        this.logger.info("getData: Not Found");
         throw new NotFoundHttpError();
     }
 
     public async getMetadata(identifier: ResourceIdentifier): Promise<RepresentationMetadata> {
+        this.logger.info("getMetadata " + identifier.path);
         const metadata = new RepresentationMetadata(identifier);
-        
-        this.logger.info("getMetadata");
-        
-        const blobResource = (await this.resourceMapper.mapUrlToFilePath(identifier, false)).filePath.substring(1);
-        
+
         try {
-            var headResponse = await head(blobResource, { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
+            var headResponse = await head(await this.getBlobIdentifier(identifier), { token: "vercel_blob_rw_M7axDeklTQ426rLR_RGYECRm0P4vN8MQYOZ2edlpw031Wsv" });
 
             // Make sure the last modified date is the max of data and metadata modified date
             const modified = new Date(metadata.get(DC.terms.modified)?.value ?? 0);
@@ -78,6 +68,8 @@ export class VercelBlobDataAccessor implements DataAccessor {
 
             return metadata;
         } catch(e) {
+            this.logger.info("getMetadata: error "+ e)
+            this.logger.info("getMetadata: is container identifier" + isContainerIdentifier(identifier) + identifier.path)
             throw new NotFoundHttpError();
         }
 
