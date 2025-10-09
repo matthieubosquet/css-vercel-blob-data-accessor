@@ -1,1 +1,2 @@
-export * from './VercelBlobDataAccessor'
+export * from './BlobIdentifierMapper.js'
+export * from './VercelBlobDataAccessor.js'

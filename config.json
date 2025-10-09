@@ -4,7 +4,8 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/context.jsonld"
   ],
   "import": [
-    "css-vercel-blob-data-accessor:config/vercel-blob.json",
+    "css-vercel-blob-data-accessor:config/storage/backend/vercel-blob.json",
+    "css-vercel-blob-data-accessor:config/util/identifiers/suffix.json",
     
     "css:config/app/init/default.json",
     "css:config/app/main/default.json",
@@ -30,7 +31,6 @@
     "css:config/storage/location/root.json",
     "css:config/storage/middleware/default.json",
     "css:config/util/auxiliary/acr.json",
-    "css:config/util/identifiers/suffix.json",
     "css:config/util/index/default.json",
     "css:config/util/logging/winston.json",
     "css:config/util/representation-conversion/default.json",
