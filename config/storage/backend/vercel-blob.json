@@ -1,10 +1,20 @@
 {
-  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/context.jsonld",
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/context.jsonld"
+  ],
   "@graph": [
     {
-      "@type": "VercelBlobDataAccessor",
-      "@id": "urn:x:VercelBlobDataAccessor",
-      "resourceMapper": { "@id": "urn:solid-server:default:FileIdentifierMapper" }
+      "@id": "urn:solid-server:default:ResourceStore_Backend",
+      "@type": "DataAccessorBasedStore",
+      "identifierStrategy": { "@id": "urn:solid-server:default:IdentifierStrategy" },
+      "auxiliaryStrategy": { "@id": "urn:solid-server:default:AuxiliaryStrategy" },
+      "accessor": {
+        "@id": "urn:css-vercel-blob-data-accessor:config:storage:backend:vercel_blob",
+        "@type": "VercelBlobDataAccessor",
+        "resourceMapper": { "@id": "urn:solid-server:default:FileIdentifierMapper" }
+      },
+      "metadataStrategy": { "@id": "urn:solid-server:default:MetadataStrategy" }
     }
   ]
 }

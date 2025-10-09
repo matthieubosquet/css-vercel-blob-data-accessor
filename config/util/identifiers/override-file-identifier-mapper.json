@@ -1,0 +1,17 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "@id": "urn:css-vercel-blob-data-accessor:config:util:identifiers:override_file_identifier_mapper",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:FileIdentifierMapper" },
+      "overrideParameters": {
+        "@type": "BlobIdentifierMapper",
+        "base": { "@id": "urn:solid-server:default:variable:baseUrl" }
+      }
+    }
+  ]
+}

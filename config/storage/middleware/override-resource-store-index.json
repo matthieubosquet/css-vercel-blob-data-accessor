@@ -1,0 +1,14 @@
+{
+  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+  "@graph": [
+    {
+      "@id": "urn:css-vercel-blob-data-accessor:config:storage:middleware:override_resource_store_index",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:ResourceStore_Index" },
+      "overrideParameters": {
+        "@type": "PassthroughStore",
+        "source": { "@id": "urn:solid-server:default:ResourceStore_Locking" }
+      }
+    }
+  ]
+}

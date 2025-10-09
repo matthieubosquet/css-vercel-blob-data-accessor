@@ -1,0 +1,14 @@
+{
+  "@context": "https://linkedsoftwaredependencies.org/bundles/npm/@solid/community-server/^8.0.0/components/context.jsonld",
+  "@graph": [
+    {
+      "@id": "urn:css-vercel-blob-data-accessor:config:util:resource-locker:file:override_expiration",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:solid-server:default:ResourceLocker" },
+      "overrideParameters": {
+        "@type": "WrappedExpiringReadWriteLocker",
+        "expiration": 60000
+      }
+    }
+  ]
+}
