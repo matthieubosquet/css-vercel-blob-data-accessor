@@ -4,20 +4,21 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/components/context.jsonld"
   ],
   "import": [
+    "css-vercel-blob-data-accessor:config/http/handler/ldp.json",
     "css-vercel-blob-data-accessor:config/storage/backend/vercel-blob.json",
     "css-vercel-blob-data-accessor:config/util/identifiers/suffix.json",
+    "css-vercel-blob-data-accessor:config/util/representation-conversion/minimal.json",
     
     "css:config/app/init/default.json",
     "css:config/app/main/default.json",
     "css:config/app/variables/default.json",
-    "css:config/http/handler/default.json",
     "css:config/http/middleware/default.json",
     "css:config/http/notifications/all.json",
     "css:config/http/server-factory/http.json",
     "css:config/http/static/default.json",
     "css:config/identity/access/public.json",
     "css:config/identity/email/default.json",
-    "css:config/identity/handler/no-accounts.json",
+    "css:config/identity/handler/disabled.json",
     "css:config/identity/oidc/default.json",
     "css:config/identity/ownership/token.json",
     "css:config/identity/pod/static.json",
@@ -33,7 +34,6 @@
     "css:config/util/auxiliary/acr.json",
     "css:config/util/index/default.json",
     "css:config/util/logging/winston.json",
-    "css:config/util/representation-conversion/default.json",
     "css:config/util/resource-locker/file.json",
     "css:config/util/variables/default.json"
   ],
