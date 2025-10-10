@@ -33,9 +33,7 @@
         }
       ]
     },
-
     {
-      "comment": "Converts either to a default UI or to a representation.",
       "@id": "urn:solid-server:default:UiEnabledConverter",
       "@type": "StatusWaterfallHandler",
       "handlers": [
