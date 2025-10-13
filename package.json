@@ -16,7 +16,8 @@
     "https://linkedsoftwaredependencies.org/bundles/npm/css-vercel-blob-data-accessor/^0.0.0/dist/": "dist/"
   },
   "scripts": {
-    "start": "community-solid-server --config config.json --rootFilePath .data --mainModulePath . --loggingLevel info",
+    "start": "community-solid-server --config config.json --baseUrl \"https://css-bvh5hqh9g6g9anhx.uksouth-01.azurewebsites.net\" --rootFilePath .data --mainModulePath . --loggingLevel info --port $PORT",
+    "start:dev": "community-solid-server --config config.json --rootFilePath .data --mainModulePath . --loggingLevel info",
     "build": "npm run build:ts && npm run build:components",
     "build:components": "componentsjs-generator -s src -c dist/components -i .componentsignore -r css-vercel-blob-data-accessor",
     "build:ts": "tsc",
