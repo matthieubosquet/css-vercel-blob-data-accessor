@@ -17,11 +17,11 @@
   },
   "scripts": {
     "start": "community-solid-server --config config.json --baseUrl \"https://css-bvh5hqh9g6g9anhx.uksouth-01.azurewebsites.net\" --rootFilePath .data --mainModulePath . --loggingLevel info --port $PORT",
-    "start:dev": "community-solid-server --config config.json --rootFilePath .data --mainModulePath . --loggingLevel info",
+    "start:dev": "community-solid-server --config config.json --rootFilePath .data --mainModulePath . --loggingLevel info --port 8080",
     "build": "npm run build:ts && npm run build:components",
     "build:components": "componentsjs-generator -s src -c dist/components -i .componentsignore -r css-vercel-blob-data-accessor",
     "build:ts": "tsc",
-    "prepare": "npm run build"
+    "prepare": "npm i && npm run build"
   },
   "files": [
     "dist",
