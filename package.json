@@ -21,9 +21,7 @@
     "build": "npm run build:ts && npm run build:components",
     "build:components": "componentsjs-generator -s src -c dist/components -i .componentsignore -r css-vercel-blob-data-accessor",
     "build:ts": "tsc",
-    "prepare": "npm run build",
-    "test": "jest",
-    "x": "vercel env pull"
+    "prepare": "npm run build"
   },
   "files": [
     "dist",
@@ -39,8 +37,6 @@
     "@tsconfig/node20": "^20",
     "@types/jest": "^30",
     "componentsjs-generator": "^4",
-    "jest": "^30",
-    "ts-jest": "^29",
     "typescript": "^5"
   },
   "license": "MIT"
