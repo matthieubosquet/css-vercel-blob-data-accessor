@@ -14,7 +14,7 @@
   ],
   "@graph": [
     {
-      "comment": "Handles data conversion when required.",
+      "comment": "Only use minimum set of standard content type converters (remove html/md templating as it is not standard).",
       "@id": "urn:solid-server:default:RepresentationConverter",
       "@type": "StatusWaterfallHandler",
       "handlers": [
@@ -34,6 +34,7 @@
       ]
     },
     {
+      "comment": "No default UI converter (as it is not standard), go to representation converters instead.",
       "@id": "urn:solid-server:default:UiEnabledConverter",
       "@type": "StatusWaterfallHandler",
       "handlers": [
